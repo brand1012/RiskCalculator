@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>repl.it</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  <div id="container">
+    <p id="info" style="padding: 10px 10px 0px 10px"></p>
+    <form style="padding:25px">
+      Attacker Number: <input type="number" id="attNum"><br>
+      Defender Number: <input type="number" id="defNum"><br>
+      <input type="button" id="submit" onclick="send()" value="Get Probability">
+    </form>
+  </div>
+  <script>
+    var msgInfo = document.getElementById("info");
+
+    function send() {
+      var attNum = parseInt(document.getElementById("attNum").value);
+      var defNum = parseInt(document.getElementById("defNum").value);
+      if (!attNum || !defNum || attNum <= 0 || defNum <= 0 || defNum > 20 || attNum > 20) {
+        msgInfo.innerText = "ERROR: Troop numbers must be between 0 and 20!";
+      } else if (!Number.isInteger(attNum) || !Number.isInteger(defNum)) {
+        msgInfo.innerText = "ERROR: Troop numbers must be integers!";
+      } else {
+        msgInfo.innerText = "Waiting for result..."
+        solve(attNum, defNum).then(res => msgInfo.innerText = res)
+      }
+    }
+    /**
+     * Returns percent chance of attack succeeding given army counts
+     *
+     * @param {number} attNum The number of attacking armies
+     * @param {number} defNum The number of defending armies
+     * @return {number} Percent chance of attack succeeding.
+     */
+    let solve = async (attNum, defNum) => {
+      // Edge Cases
+      if (defNum < 1) return 1;
+      if (attNum < 1) return 0;
+      let res = 0;
+      // Return from table if base case
+      if (attNum <= 3 && defNum <= 2) {
+        res = baseodds[attNum - 1][defNum - 1]
+      }
+      // Compute if only two attackers and more than 2 defenders
+      else if (attNum == 2) {
+        res = (295 / 1296) * await solve(attNum, defNum - 2) + (420 / 1296) * await solve(attNum - 1, defNum - 1)
+      }
+      // Compute if only one attacker and more than 2 defenders
+      else if (attNum == 1) {
+        res = (55 / 216) * await solve(attNum, defNum - 1)
+      }
+      // Compute if only one defender and more than 3 attackers
+      else if (defNum == 1) {
+        res = (855 / 1296) + (441 / 1296) * await solve(attNum - 1, defNum)
+      }
+      // Compute if more than 3 attackers and more than 2 defenders
+      else {
+        res = (2890 / 7776) * await solve(attNum, defNum - 2) + (2275 / 7776) * await solve(attNum - 2, defNum) + (2611 / 7776) * await solve(attNum - 1, defNum - 1)
+      }
+      return res;
+    }
+    // Used as base cases
+    let baseodds = [
+      [15 / 36, 275 / 2592],
+      [1955 / 2592, 235 / 648],
+      [342035 / 373248, 6610505 / 10077696]
+    ]
+  </script>
+</body>
+
+</html>
